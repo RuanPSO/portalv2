@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Portal Guacamole</title>
+
+    <style>
+        body {
+            font-family: Arial;
+            background: #111;
+            color: white;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            max-width: 600px;
+            margin: auto;
+        }
+
+        li {
+            background: #1e1e1e;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 8px;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        a {
+            background: #007bff;
+            color: white;
+            padding: 8px 12px;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        a:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Conexões disponíveis</h2>
+
+<ul>
+  {% if connections %}
+    {% for id, conn in connections.items() %}
+      <li>
+        <span>{{ conn.get("name", "Sem nome") }}</span>
+
+        <a href="{{ url_for('conectar_redirect', connection_id=id) }}" target="_blank">
+          🚀 Abrir RDP
+        </a>
+      </li>
+    {% endfor %}
+  {% else %}
+    <li>Nenhuma conexão encontrada</li>
+  {% endif %}
+</ul>
+
+
+</body>
+</html>

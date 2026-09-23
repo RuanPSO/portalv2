@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página não encontrada - Portal Interno</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+    <style>
+        /* Reset básico e estilos gerais */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        .error-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 15px 30px rgba(0, 20, 50, 0.15);
+            padding: 60px 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .error-code {
+            font-size: 120px;
+            font-weight: 800;
+            color: #1a3b7a;
+            line-height: 1;
+            margin-bottom: 10px;
+            letter-spacing: -4px;
+        }
+
+        .error-code span {
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .error-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a3b7a;
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .error-message a {
+            color: #1a73e8;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .error-message a:hover {
+            text-decoration: underline;
+        }
+
+        .btn-home {
+            display: inline-block;
+            background: #1a3b7a;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 16px;
+            transition: background 0.3s ease, transform 0.2s;
+            box-shadow: 0 4px 10px rgba(26, 59, 122, 0.3);
+        }
+
+        .btn-home:hover {
+            background: #0f2a5a;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(26, 59, 122, 0.4);
+        }
+
+        .btn-home:active {
+            transform: translateY(0);
+        }
+
+        .illustration {
+            margin: 20px 0 30px;
+            font-size: 70px;
+            line-height: 1;
+        }
+
+        /* Responsividade */
+        @media (max-width: 480px) {
+            .error-container {
+                padding: 40px 20px;
+            }
+            .error-code {
+                font-size: 80px;
+            }
+            .error-title {
+                font-size: 22px;
+            }
+            .illustration {
+                font-size: 50px;
+            }
+        }
+
+        /* Tema escuro (opcional, se seu sistema tiver) */
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #121826;
+            }
+            .error-container {
+                background: #1e2738;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.5);
+            }
+            .error-code {
+                color: #6b9fff;
+            }
+            .error-title {
+                color: #d0e0ff;
+            }
+            .error-message {
+                color: #b0c4de;
+            }
+            .btn-home {
+                background: #2b4a8a;
+                box-shadow: 0 4px 10px rgba(0,20,50,0.5);
+            }
+            .btn-home:hover {
+                background: #3b5fa0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-code">
+            <span>4</span><span>0</span><span>4</span>
+        </div>
+        <div class="illustration">🔍</div>
+        <h1 class="error-title">Ops! Página não encontrada</h1>
+        <p class="error-message">
+            A página que você está procurando pode ter sido removida, teve o nome alterado ou está temporariamente indisponível.
+            <br><br>
+            Que tal voltar para o <a href="{{ url_for('index') }}">início</a>?
+        </p>
+        <a href="{{ url_for('index') }}" class="btn-home">🏠 Voltar ao início</a>
+    </div>
+</body>
+</html>

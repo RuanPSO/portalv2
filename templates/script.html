@@ -1,0 +1,259 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; }
+  .label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+  .bar-bg { width: 100%; background: var(--color-background-secondary); border-radius: 6px; height: 22px; position: relative; overflow: hidden; }
+  .bar-fill { height: 22px; border-radius: 6px; transition: width 0.4s ease; }
+  .bar-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; color: var(--color-text-primary); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: var(--border-radius-md); }
+  .disk-item { margin-bottom: 10px; }
+  .disk-header { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; }
+  .pill { font-size: 11px; padding: 2px 10px; border-radius: 999px; font-weight: 500; display: inline-block; }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .service-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 10px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin-bottom: 6px; font-size: 13px; }
+  .err { color: var(--color-text-danger); font-size: 13px; padding: 8px 0; }
+  #log { font-size: 12px; font-family: var(--font-mono); color: var(--color-text-secondary); margin-top: 8px; max-height: 80px; overflow-y: auto; }
+</style>
+
+<div style="padding: 1rem 0;">
+
+  <div class="card" style="margin-bottom: 1rem;">
+    <p style="font-size: 15px; font-weight: 500; margin-bottom: 12px;">Testar endpoint <code>/api/host_details/{hostid}</code></p>
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <input type="number" id="hostInput" placeholder="Digite o hostid..." style="flex: 1; min-width: 160px;" />
+      <button id="btnBuscar" onclick="buscarHost()" style="white-space: nowrap;">Buscar dados ↗</button>
+      <button onclick="limpar()" style="white-space: nowrap; border-color: var(--color-border-tertiary); color: var(--color-text-secondary);">Limpar</button>
+    </div>
+    <div id="log"></div>
+  </div>
+
+  <div id="resultado" style="display: none;">
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); gap: 10px; margin-bottom: 1rem;">
+      <div class="card" style="text-align:center;">
+        <div class="label">Host</div>
+        <div id="r-nome" style="font-size: 15px; font-weight: 500;">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">Status</div>
+        <div id="r-status">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">OS</div>
+        <div id="r-os" style="font-size: 13px;">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">IP</div>
+        <div id="r-ip" style="font-size: 13px; font-family: var(--font-mono);">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">Ping</div>
+        <div id="r-ping" style="font-size: 13px;">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">Latência</div>
+        <div id="r-latencia" style="font-size: 13px;">-</div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <div class="label">Uptime</div>
+        <div id="r-uptime" style="font-size: 13px;">-</div>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1rem;">
+      <div class="card">
+        <div class="label" style="margin-bottom: 6px;">CPU</div>
+        <div class="bar-bg">
+          <div id="r-cpu-bar" class="bar-fill" style="background: #378ADD; width: 0%;"></div>
+          <div class="bar-label"><span id="r-cpu-val">N/A</span></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="label" style="margin-bottom: 6px;">Memória</div>
+        <div class="bar-bg">
+          <div id="r-mem-bar" class="bar-fill" style="background: #1D9E75; width: 0%;"></div>
+          <div class="bar-label"><span id="r-mem-val">N/A</span></div>
+        </div>
+        <div id="r-mem-detalhe" style="font-size: 11px; color: var(--color-text-secondary); margin-top: 4px; text-align: center;"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1rem;">
+      <div class="section-title">Discos</div>
+      <div id="r-discos"><span style="font-size: 13px; color: var(--color-text-secondary);">Sem discos</span></div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1rem;">
+      <div class="section-title">Serviços / Triggers</div>
+      <div id="r-services"><span style="font-size: 13px; color: var(--color-text-secondary);">Nenhum</span></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">JSON bruto recebido</div>
+      <pre id="r-json" style="font-size: 11px; font-family: var(--font-mono); color: var(--color-text-secondary); white-space: pre-wrap; word-break: break-all; max-height: 220px; overflow-y: auto;"></pre>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function log(msg) {
+  const el = document.getElementById('log');
+  el.innerHTML = msg;
+}
+
+function limpar() {
+  document.getElementById('hostInput').value = '';
+  document.getElementById('resultado').style.display = 'none';
+  log('');
+}
+
+function formatPing(v) {
+  if (v === null || v === undefined) return 'N/A';
+  return v === 1 ? 'OK' : 'Sem resposta';
+}
+
+function formatLatency(ms) {
+  if (ms === null || ms === undefined) return 'N/A';
+  return ms.toFixed(2) + ' ms';
+}
+
+function formatUptime(s) {
+  if (!s || s <= 0) return 'N/A';
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + 'm';
+}
+
+function sevLabel(sev) {
+  return { 2: 'Warning', 3: 'Average', 4: 'High', 5: 'Disaster' }[sev] || 'Info';
+}
+
+function sevColor(sev) {
+  return {
+    2: 'background:#FAC775; color:#633806',
+    3: 'background:#EF9F27; color:#412402',
+    4: 'background:#E24B4A; color:#501313',
+    5: 'background:#534AB7; color:#EEEDFE'
+  }[sev] || 'background:var(--color-background-secondary); color:var(--color-text-secondary)';
+}
+
+function diskColor(uso) {
+  if (uso >= 90) return '#E24B4A';
+  if (uso >= 75) return '#EF9F27';
+  return '#FAC775';
+}
+
+async function buscarHost() {
+  const hostid = document.getElementById('hostInput').value.trim();
+  if (!hostid) { log('<span class="err">Informe um hostid.</span>'); return; }
+
+  log('Buscando /api/host_details/' + hostid + '...');
+  document.getElementById('resultado').style.display = 'none';
+
+  try {
+    const res = await fetch('/api/host_details/' + hostid);
+    if (!res.ok) {
+      log('<span class="err">HTTP ' + res.status + ' — verifique se a rota existe e o hostid é válido.</span>');
+      return;
+    }
+    const d = await res.json();
+
+    if (d.error) { log('<span class="err">Erro da API: ' + d.error + '</span>'); return; }
+
+    log('OK — dados recebidos.');
+
+    document.getElementById('r-nome').textContent = d.nome || '—';
+
+    const statusEl = document.getElementById('r-status');
+    const up = d.status === 'UP';
+    const down = d.status === 'DOWN';
+    statusEl.innerHTML = '<span class="pill" style="' +
+      (up ? 'background:#EAF3DE; color:#3B6D11' : down ? 'background:#FCEBEB; color:#A32D2D' : 'background:var(--color-background-secondary); color:var(--color-text-secondary)') +
+      '">' + (d.status || 'UNKNOWN') + '</span>';
+
+    document.getElementById('r-os').textContent = d.os ? d.os.toUpperCase() : '—';
+    document.getElementById('r-ip').textContent = d.ip || '—';
+    document.getElementById('r-ping').textContent = formatPing(d.icmp_ping);
+    document.getElementById('r-latencia').textContent = formatLatency(d.latency_ms);
+    document.getElementById('r-uptime').textContent = formatUptime(d.uptime_seconds);
+
+    let cpu = null;
+    if (typeof d.cpu === 'number') cpu = d.cpu;
+    if (typeof d.cpu === 'object' && d.cpu && typeof d.cpu.used === 'number') cpu = d.cpu.used;
+    const cpuBar = document.getElementById('r-cpu-bar');
+    const cpuVal = document.getElementById('r-cpu-val');
+    if (cpu !== null) {
+      cpuBar.style.width = cpu + '%';
+      cpuBar.style.background = cpu > 85 ? '#E24B4A' : cpu > 60 ? '#EF9F27' : '#378ADD';
+      cpuVal.textContent = cpu.toFixed(2) + '%';
+    } else {
+      cpuBar.style.width = '0%';
+      cpuVal.textContent = 'N/A';
+    }
+
+    const memBar = document.getElementById('r-mem-bar');
+    const memVal = document.getElementById('r-mem-val');
+    const memDet = document.getElementById('r-mem-detalhe');
+    if (d.memoria) {
+      memBar.style.width = d.memoria.percent + '%';
+      memBar.style.background = d.memoria.percent > 85 ? '#E24B4A' : d.memoria.percent > 65 ? '#EF9F27' : '#1D9E75';
+      memVal.textContent = d.memoria.percent + '%';
+      memDet.textContent = d.memoria.used_gb + ' / ' + d.memoria.total_gb + ' GB';
+    } else {
+      memBar.style.width = '0%';
+      memVal.textContent = 'N/A';
+      memDet.textContent = '';
+    }
+
+    const disksDiv = document.getElementById('r-discos');
+    disksDiv.innerHTML = '';
+    if (d.discos && d.discos.length > 0) {
+      d.discos.forEach(dk => {
+        disksDiv.innerHTML += `
+          <div class="disk-item">
+            <div class="disk-header">
+              <span style="font-family: var(--font-mono); font-size: 12px;">${dk.mount}</span>
+              <span style="font-weight: 500; font-size: 12px;">${dk.uso}%</span>
+            </div>
+            <div class="bar-bg">
+              <div class="bar-fill" style="width:${dk.uso}%; background:${diskColor(dk.uso)};"></div>
+              <div class="bar-label">${dk.uso}%</div>
+            </div>
+          </div>`;
+      });
+    } else {
+      disksDiv.innerHTML = '<span style="font-size:13px; color:var(--color-text-secondary);">Sem discos</span>';
+    }
+
+    const servDiv = document.getElementById('r-services');
+    servDiv.innerHTML = '';
+    if (d.services && d.services.length > 0) {
+      d.services.forEach(s => {
+        servDiv.innerHTML += `
+          <div class="service-row">
+            <span>${s.description || '—'}</span>
+            <span class="pill" style="${sevColor(s.severity)}">${sevLabel(s.severity)}</span>
+          </div>`;
+      });
+    } else {
+      servDiv.innerHTML = '<span style="font-size:13px; color:var(--color-text-secondary);">Nenhum serviço ativo</span>';
+    }
+
+    document.getElementById('r-json').textContent = JSON.stringify(d, null, 2);
+    document.getElementById('resultado').style.display = 'block';
+
+  } catch (e) {
+    log('<span class="err">Falha na requisição: ' + e.message + ' — o servidor está rodando?</span>');
+  }
+}
+
+document.getElementById('hostInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') buscarHost();
+});
+</script>

@@ -1,0 +1,87 @@
+{% extends "index.html" %}
+
+{% block title %}Incidentes{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Incidentes</h1>
+
+<div id="incidentes-container" class="space-y-2">
+  {% for i in incidentes %}
+    <div class="p-2 rounded shadow-sm
+      {% if i.severidade == 5 %} bg-red-700 text-white
+      {% elif i.severidade == 4 %} bg-red-500 text-white
+      {% elif i.severidade == 3 %} bg-orange-400
+      {% elif i.severidade == 2 %} bg-yellow-300
+      {% elif i.severidade == 1 %} bg-blue-300
+      {% else %} bg-gray-200
+      {% endif %}">
+
+      <div class="flex justify-between items-center leading-tight">
+        <span class="text-sm font-semibold">{{ i.incidente }}</span>
+        <span class="text-xs font-mono">{{ i.duracao }}</span>
+      </div>
+
+      <div class="mt-0.5 text-base font-extrabold">
+        {{ i.host }}
+      </div>
+
+      <div class="text-[11px] opacity-80">
+        Início: {{ i.hora_inicio }}
+      </div>
+    </div>
+  {% else %}
+    <div class="bg-green-200 p-3 rounded text-sm">
+      Nenhum incidente ativo hoje
+    </div>
+  {% endfor %}
+</div>
+
+<script>
+const container = document.getElementById("incidentes-container");
+
+async function atualizarIncidentes() {
+  try {
+    const res = await fetch("/incidentes/json", { cache: "no-store" });
+    const incidentes = await res.json();
+
+    console.log("📥 incidentes:", incidentes);
+
+    container.innerHTML = "";
+
+    if (!incidentes || incidentes.length === 0) {
+      container.innerHTML = `
+        <div class="bg-green-200 p-3 rounded text-sm">
+          Nenhum incidente ativo hoje
+        </div>`;
+      return;
+    }
+
+    incidentes.forEach(i => {
+      let cor = "bg-gray-200";
+      if (i.severidade == 5) cor = "bg-red-700 text-white";
+      else if (i.severidade == 4) cor = "bg-red-500 text-white";
+      else if (i.severidade == 3) cor = "bg-orange-400";
+      else if (i.severidade == 2) cor = "bg-yellow-300";
+      else if (i.severidade == 1) cor = "bg-blue-300";
+
+      container.insertAdjacentHTML("beforeend", `
+        <div class="p-2 rounded shadow-sm ${cor}">
+          <div class="flex justify-between items-center leading-tight">
+            <span class="text-sm font-semibold">${i.incidente}</span>
+            <span class="text-xs font-mono">${i.duracao}</span>
+          </div>
+          <div class="mt-0.5 text-base font-extrabold">${i.host}</div>
+          <div class="text-[11px] opacity-80">Início: ${i.hora_inicio}</div>
+        </div>
+      `);
+    });
+
+  } catch (e) {
+    console.error("Erro ao atualizar incidentes:", e);
+  }
+}
+
+// intervalo de atualização 1000 (1s) ou 2000 (2s)
+setInterval(atualizarIncidentes, 1000);
+</script>
+{% endblock %}

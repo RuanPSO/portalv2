@@ -1,0 +1,208 @@
+{% extends "sustentacao/index.html" %}
+{% block title %}{{ grupo.grupo }}{% endblock %}
+
+{% block content %}
+
+<h1 class="text-2xl font-bold mb-4">
+  Grupo: {{ grupo.grupo }}
+</h1>
+
+<a href="/hosts" class="text-sm text-blue-600 hover:underline">
+  ← Voltar para grupos
+</a>
+
+<div class="grid grid-cols-3 gap-4" id="hostsContainer">
+  {% for h in hosts %}
+  <div
+    class="bg-white p-4 rounded shadow cursor-pointer host-card"
+    onclick="openHostModal({{ h.hostid }})"
+  >
+
+    <h3 class="font-bold text-lg mb-2">{{ h.hostname }}</h3>
+
+    <p class="text-sm">
+      Sistema:
+      <span id="os-{{ h.hostid }}" class="font-semibold text-gray-600">
+        carregando...
+      </span>
+    </p>
+
+    <!-- STATUS -->
+    <p id="status-{{ h.hostid }}" class="text-sm font-semibold text-gray-400 mt-1">
+      verificando status...
+    </p>
+
+    <!-- DESCRIÇÃO -->
+    <p id="host-desc-{{ h.hostid }}" class="text-xs text-gray-500"></p>
+
+    <!-- MÉTRICAS -->
+    <p id="host-metrics-{{ h.hostid }}" class="text-xs text-gray-400 mt-1">
+      Ping: -- • Latência: -- • Uptime: --
+    </p>
+
+    <!-- BOTÃO -->
+    <button
+      type="button"
+      class="mt-2 bg-blue-600 hover:bg-blue-700 text-white text-sm px-3 py-2 rounded"
+      onclick="event.stopPropagation(); conectarHostById({{ h.hostid }})"
+    >
+      🔗 Conectar ao Host
+    </button>
+
+    <!-- STATUS CONEXÃO (SEPARADO) -->
+    <p id="status-conn-{{ h.hostid }}" class="uppercase tracking-wide text-xs font-bold mt-1"></p>
+
+    <!-- CPU -->
+    <div class="mt-3">
+      <small>CPU</small>
+      <div class="w-full bg-gray-200 rounded h-6 relative">
+        <div id="cpu-{{ h.hostid }}" class="bg-blue-500 h-6 rounded"></div>
+        <span id="cpu-val-{{ h.hostid }}" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800">
+          0%
+        </span>
+      </div>
+    </div>
+
+    <!-- MEMÓRIA -->
+    <div class="mt-2">
+      <small>Memória</small>
+      <div class="w-full bg-gray-200 rounded h-6 relative">
+        <div id="mem-{{ h.hostid }}" class="bg-green-500 h-6 rounded"></div>
+        <span id="mem-val-{{ h.hostid }}" class="absolute inset-0 flex items-center justify-center text-xs font-semibold text-gray-800">
+          0%
+        </span>
+      </div>
+    </div>
+
+    <!-- DISKS -->
+    <div class="mt-3">
+      <small class="font-semibold">Discos</small>
+      <div id="disks-{{ h.hostid }}" class="mt-2 space-y-3 text-sm">
+        <span class="text-gray-300">-</span>
+      </div>
+    </div>
+
+  </div>
+  {% endfor %}
+</div>
+
+<!--  MODAL FORA DO LOOP -->
+<div id="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8);">
+  <div style="position:absolute; top:5%; left:5%; width:90%; height:90%; background:black;">
+
+    <div onclick="fecharModal()" style="position:absolute; right:20px; top:10px; color:white; cursor:pointer; font-size:22px;">
+      ✖
+    </div>
+
+    <iframe id="rdpFrame" style="width:100%; height:100%; border:none;"></iframe>
+
+  </div>
+</div>
+
+<script>
+  const HOSTS = JSON.parse('{{ hosts | tojson | safe }}');
+</script>
+
+<script src="/static/js/metrics.js"></script>
+
+<script>
+async function conectarHost(ip, nome, hostid){
+
+    let status = document.getElementById("status-conn-" + hostid)
+
+    status.innerText = "Conectando..."
+    status.className = "text-yellow-500 text-xs font-bold"
+
+    try{
+
+        let r = await fetch("/api/connect",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                ip: ip,
+                name: nome
+            })
+        })
+
+        let data = await r.json()
+
+        if(data.error){
+            throw new Error(data.error)
+        }
+
+        document.getElementById("rdpFrame").src = data.url
+        document.getElementById("modal").style.display = "block"
+
+        status.innerText = "Conectado"
+        status.className = "text-green-600 text-xs font-bold"
+
+    }
+    catch(e){
+
+        status.innerText = "Erro"
+        status.className = "text-red-500 text-xs font-bold"
+
+        alert("Erro ao conectar: " + e.message)
+    }
+}
+
+function fecharModal(){
+    document.getElementById("rdpFrame").src = ""
+    document.getElementById("modal").style.display = "none"
+}
+</script>
+<script>
+async function conectarHostById(hostid){
+
+    let status = document.getElementById("status-conn-" + hostid)
+
+    status.innerText = "Conectando..."
+    status.className = "text-yellow-500 text-xs font-bold"
+
+    try{
+
+        // BUSCA DADOS REAIS
+        let r = await fetch(`/api/host_details/${hostid}`)
+        let host = await r.json()
+
+        console.log("HOST:", host)
+
+        //  ENVIA NO FORMATO QUE SEU BACKEND ESPERA
+        let res = await fetch("/api/connect",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                nome: host.nome,                     // ✔ nome da conexão
+                porta: host.porta_customizada,       // ✔ porta dinâmica
+                ip: host.ip                          // (opcional, só log)
+            })
+        })
+
+        let data = await res.json()
+
+        if(data.error){
+            throw new Error(data.error)
+        }
+
+        document.getElementById("rdpFrame").src = data.url
+        document.getElementById("modal").style.display = "block"
+
+        status.innerText = "Conectado"
+        status.className = "text-green-600 text-xs font-bold"
+
+    }
+    catch(e){
+        console.error(e)
+
+        status.innerText = "Erro"
+        status.className = "text-red-500 text-xs font-bold"
+
+        alert("Erro: " + e.message)
+    }
+}
+</script>
+{% endblock %}

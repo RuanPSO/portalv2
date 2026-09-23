@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RDP Custom</title>
+
+    <script src="https://portal-dc.datacore.com.br/guacamole/guacamole-common-js/all.min.js"></script>
+
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            background: black;
+        }
+
+        #display {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+
+<div id="display"></div>
+
+<script>
+    console.log("TOKEN:", "{{ token }}");
+    console.log("ID:", "{{ connection_id }}");
+    console.log("DS:", "{{ data_source }}");
+    const token = "{{ token }}";
+    const connectionId = "{{ connection_id }}";
+    const dataSource = "{{ data_source }}";
+
+    // 🔥 cria túnel primeiro
+    const tunnel = new Guacamole.WebSocketTunnel(
+        "wss://portal-dc.datacore.com.br/guacamole/websocket-tunnel"
+    );
+
+    // 🔥 cria cliente
+    const guac = new Guacamole.Client(tunnel);
+
+    // 🔥 adiciona display na tela
+    const display = document.getElementById("display");
+    display.appendChild(guac.getDisplay().getElement());
+
+    // 🔍 DEBUG (ESSENCIAL)
+    guac.onstatechange = function(state) {
+        console.log("Estado:", state);
+    };
+
+    guac.onerror = function(error) {
+        console.error("Erro:", error);
+    };
+
+    // 🔥 CONEXÃO (CORRETA)
+    console.log("Antes do connect");
+
+    guac.connect(
+        "token=" + token +
+        "&GUAC_DATA_SOURCE=" + dataSource +
+        "&GUAC_ID=" + connectionId +
+        "&GUAC_TYPE=c" +
+        "&GUAC_WIDTH=" + window.innerWidth +
+        "&GUAC_HEIGHT=" + window.innerHeight +
+        "&GUAC_DPI=96"
+    );
+
+    console.log("Depois do connect");
+    // 🎮 MOUSE
+    const mouse = new Guacamole.Mouse(guac.getDisplay().getElement());
+
+    mouse.onmousedown =
+    mouse.onmouseup =
+    mouse.onmousemove = function(mouseState) {
+        guac.sendMouseState(mouseState);
+    };
+
+    // ⌨️ TECLADO
+    const keyboard = new Guacamole.Keyboard(document);
+
+    keyboard.onkeydown = function(keysym) {
+        guac.sendKeyEvent(1, keysym);
+    };
+
+    keyboard.onkeyup = function(keysym) {
+        guac.sendKeyEvent(0, keysym);
+    };
+
+    // 🔄 RESIZE
+    window.onresize = function() {
+        guac.sendSize(window.innerWidth, window.innerHeight);
+        guac.getDisplay().scale(1);
+    };
+</script>
+
+</body>
+</html>

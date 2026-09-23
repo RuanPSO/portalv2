@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>{% block title %}Portal{% endblock %}</title>
+  <link rel="icon" href="/templates/img/favicon.png"type="image/png">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+  <div class="flex min-h-screen">
+
+    <!-- SIDEBAR -->
+    <aside class="w-[170px] bg-[#0a466b] text-gray-100 flex flex-col">
+
+      <div class="h-16 flex items-center justify-center text-xl font-bold">
+          DATACORE
+      </div>
+
+      <nav class="flex-1 px-4 py-6 space-y-2">
+      
+        <a href="/dashboard"
+          class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+          Dashboard
+        </a>
+      
+        <a href="/hosts"
+          class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+          Hosts
+        </a>
+      
+        <a href="/incidentes"
+          class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+          Incidentes
+        </a>
+      
+        <a href="/relatorio"
+          class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+          Relatorio
+        </a>
+      
+        <a href="/cliente"
+          class="flex items-center gap-3 px-4 py-2 rounded-lg hover:bg-cyan-900 transition">
+          ClientMonitor
+        </a>        
+      
+      </nav>
+    </aside>
+
+    <!-- ÁREA DIREITA -->
+    <div class="flex flex-col flex-1">
+
+      <!-- NAVBAR -->
+      <header class="h-16 bg-white shadow flex items-center justify-between px-6">
+
+      <!-- SEARCH GLOBAL -->
+<div class="p-4 relative">
+  <input
+    type="text"
+    id="searchBox"
+    placeholder="Pesquisar host ou grupo..."
+    class="w-72 px-3 py-2 rounded border"
+    autocomplete="off"
+  />
+
+  <!-- RESULTADOS -->
+  <div
+    id="searchResults"
+    class="absolute mt-1 w-72 bg-white border rounded shadow hidden z-50"
+  ></div>
+</div>
+          <!-- USER -->
+          <div class="flex items-center gap-6">
+
+            <!-- BLOCO USUÁRIO -->
+            <div class="flex items-center gap-3">
+
+            <!-- AVATAR -->
+            <img
+              src="{{ url_for('avatar') }}?v={{ session['user']['id'] }}"
+              class="w-9 h-9 rounded-full object-cover border"
+              alt="Avatar"
+            />
+              <!-- NOME + CARGO -->
+              <div class="flex flex-col leading-tight">
+                <span class="text-gray-700 text-sm font-medium">
+                  {{ session.user.name if session.get('user') else "Usuário" }}
+                </span>
+                <span class="text-gray-500 text-xs">
+                  {{ session.user.job or "Sem cargo definido" }}
+                </span>
+              </div>
+
+            </div>
+
+            <!-- SAIR -->
+            <a
+              href="{{ url_for('logout') }}"
+              class="text-sm text-red-400 hover:text-red-600 transition"
+            >
+              Sair
+            </a>
+
+          </div>
+
+
+      </header>
+
+      <!-- CONTEÚDO -->
+      <main class="flex-1 p-6">
+        {% block content %}{% endblock %}
+      </main>
+
+    </div>
+
+  </div>
+  
+  <script src="../static/js/search.js"></script>
+
+
+
+
+<!-- MODAL HOST -->
+<div
+  id="hostModal"
+  class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50"
+  onclick="closeHostModal()"
+>
+
+  <!-- CONTEÚDO -->
+  <div
+    class="bg-white rounded-lg shadow-lg w-[500px] p-6 relative max-h-[80vh] overflow-y-auto"
+    onclick="event.stopPropagation()"
+  >
+
+    <!-- TÍTULO -->
+    <h2 class="text-xl font-bold mb-4">
+      Serviços no Host
+      <span id="host-name" class="text-blue-600"></span>
+    </h2>
+
+    <!-- ACCORDIONS -->
+    <div class="space-y-3">
+
+      <!-- SERVIÇOS ATIVOS -->
+      <div class="border rounded-lg">
+        <button
+          class="w-full flex items-center justify-between p-3 font-semibold hover:bg-gray-50"
+          onclick="toggleAccordion(this)"
+        >
+          <span>Serviços Ativos</span>
+          <svg class="w-5 h-5 transition-transform duration-200"
+               fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <div class="accordion-content hidden px-3 pb-3">
+          <div
+            id="services-container"
+            class="space-y-2 max-h-[250px] overflow-y-auto pr-2"
+          >
+            <span class="text-gray-400">Carregando serviços...</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRÓXIMOS SERVIÇOS -->
+      <div class="border rounded-lg">
+        <button
+          class="w-full flex items-center justify-between p-3 font-semibold hover:bg-gray-50"
+          onclick="toggleAccordion(this)"
+        >
+          <span>Executar atividades</span>
+          <svg class="w-5 h-5 transition-transform duration-200"
+               fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <div class="accordion-content hidden px-3 pb-3 space-y-2">
+          <div class="p-2 bg-gray-100 rounded">Backup automático</div>
+          <div class="p-2 bg-gray-100 rounded">Monitoramento avançado</div>
+        </div>
+      </div>
+
+      <!-- FERRAMENTAS -->
+      <div class="border rounded-lg">
+        <button
+          class="w-full flex items-center justify-between p-3 font-semibold hover:bg-gray-50"
+          onclick="toggleAccordion(this)"
+        >
+          <span>Ferramentas</span>
+          <svg class="w-5 h-5 transition-transform duration-200"
+               fill="none" stroke="currentColor" stroke-width="2"
+               viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round"
+                  d="M19 9l-7 7-7-7"/>
+          </svg>
+        </button>
+
+        <div class="accordion-content hidden px-3 pb-3 space-y-2">
+          <button
+            class="w-full p-2 rounded bg-blue-100 hover:bg-blue-200 text-left">
+            🔄 Reiniciar Serviço
+          </button>
+
+          <button
+            class="w-full p-2 rounded bg-red-100 hover:bg-red-200 text-left">
+            ⛔ Parar Serviço
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleAccordion(button) {
+  const content = button.nextElementSibling
+  const arrow = button.querySelector("svg")
+
+  content.classList.toggle("hidden")
+  arrow.classList.toggle("rotate-180")
+}
+</script>
+
+<!---<script>
+function startHeartbeat() {
+
+    const token = localStorage.getItem("session_token");
+
+    if (!token) {
+        console.warn("Sem session_token");
+        return;
+    }
+
+    setInterval(() => {
+        fetch("/heartbeat", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                session_token: token
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "expirada") {
+                console.warn("Sessão expirada");
+
+                // opcional: redirecionar
+                // window.location.href = "/login";
+            }
+        })
+        .catch(err => console.error("Heartbeat erro:", err));
+
+    }, 15000); // 🔥 15 segundos
+}
+
+// inicia quando carregar página
+window.addEventListener("load", startHeartbeat);
+</script> --->
+
+</body>
+</html>

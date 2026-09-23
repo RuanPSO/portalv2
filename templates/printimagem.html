@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Imprimir Capa</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+
+        .botao-imprimir {
+            padding: 20px 45px;
+            font-size: 22px;
+            font-weight: bold;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 8px 15px rgba(0, 123, 255, 0.4);
+        }
+
+        .botao-imprimir:hover {
+            background: #0056b3;
+        }
+
+        /* === ESTILOS PARA IMPRESSÃO === */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+
+            .imagem-container,
+            .imagem-container * {
+                visibility: visible !important;
+            }
+
+            .imagem-container {
+                position: fixed;
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                display: block !important;
+            }
+
+            img {
+                width: 100%;
+                height: 100vh;
+                object-fit: contain;
+                page-break-after: avoid;
+            }
+
+            @page {
+                margin: 0;
+                size: A4 portrait;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <button class="botao-imprimir" onclick="imprimirCapa()">
+        🖨️ Imprimir Capa em PDF
+    </button>
+
+    <!-- Imagem escondida - só aparece na impressão -->
+    <div class="imagem-container" style="display: none;">
+        <img id="capaImagem" 
+             src="{{ url_for('static', filename='img/capa_relatorio.jpg') }}" 
+             alt="Capa do Relatório"
+             onload="console.log('Imagem carregada com sucesso')">
+    </div>
+
+    <script>
+        function imprimirCapa() {
+            const img = document.getElementById('capaImagem');
+            
+            // Força o carregamento da imagem
+            if (img.complete && img.naturalHeight !== 0) {
+                // Imagem já está carregada
+                window.print();
+            } else {
+                // Espera a imagem carregar antes de imprimir
+                img.onload = function() {
+                    console.log('Imagem carregada - iniciando impressão');
+                    window.print();
+                };
+                
+                // Timeout de segurança (caso a imagem demore muito)
+                setTimeout(() => {
+                    window.print();
+                }, 800);
+            }
+        }
+    </script>
+</body>
+</html>

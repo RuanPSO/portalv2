@@ -1,0 +1,159 @@
+{% extends "index.html" %}
+
+{% block content %}
+
+
+
+<body>
+
+  <div class="p-6">
+
+    <h2 class="text-2xl font-semibold text-gray-800 mb-6">
+      Cadastrar usuário
+    </h2>
+
+    <div class="bg-white shadow-md rounded-xl p-6 max-w-lg">
+
+      <form id="formCadastro" class="space-y-4">
+
+        <!-- NOME -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Nome
+          </label>
+          <input 
+            type="text" 
+            id="nome" 
+            placeholder="Nome completo"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          >
+        </div>
+
+        <!-- EMAIL -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Email
+          </label>
+          <input 
+            type="email" 
+            id="email" 
+            placeholder="usuario@empresa.com"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          >
+        </div>
+
+        <!-- CARGO -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Cargo
+          </label>
+          <input 
+            type="text" 
+            id="cargo" 
+            placeholder="Ex: Analista"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          >
+        </div>
+
+        <!-- GRUPO -->
+        <div>
+          <label class="block text-sm font-medium text-gray-600 mb-1">
+            Grupo
+          </label>
+          <select 
+            id="grupo" 
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-cyan-500 focus:outline-none"
+          >
+            <option value="">Carregando grupos...</option>
+          </select>
+        </div>
+
+        <!-- BOTÃO -->
+        <div class="pt-2">
+          <button 
+            type="submit"
+            class="w-full bg-cyan-600 text-white py-2 rounded-lg hover:bg-cyan-700 transition font-medium"
+          >
+            Criar usuário
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+
+  </div>
+  <p id="resultado"></p>
+
+  <script>
+    const selectGrupo = document.getElementById("grupo");
+
+    // 🔎 carregar grupos ao abrir página
+    async function carregarGrupos() {
+      try {
+        const res = await fetch("/portal/grupos");
+        const grupos = await res.json();
+
+        selectGrupo.innerHTML = '<option value="">Selecione o grupo</option>';
+
+        grupos.forEach(g => {
+          const option = document.createElement("option");
+          option.value = g.id;
+          option.textContent = g.nome;
+          selectGrupo.appendChild(option);
+        });
+
+      } catch (err) {
+        selectGrupo.innerHTML = '<option>Erro ao carregar grupos</option>';
+      }
+    }
+
+    carregarGrupos();
+
+
+    // 🚀 envio do formulário
+    document.getElementById("formCadastro").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const resultado = document.getElementById("resultado");
+      resultado.innerText = "Enviando...";
+
+      const nome = document.getElementById("nome").value;
+      const email = document.getElementById("email").value;
+      const cargo = document.getElementById("cargo").value;
+      const grupo = document.getElementById("grupo").value;
+
+      try {
+        const res = await fetch("/portal/criar-usuario", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            nome,
+            email,
+            cargo,
+            grupo
+          })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          resultado.innerText = "Usuário criado com sucesso!";
+        } else {
+          resultado.innerText = "Erro: " + (data.error || "Falha");
+        }
+
+      } catch (err) {
+        resultado.innerText = "Erro: " + err.message;
+      }
+    });
+  </script>
+
+</body>
+
+{% endblock %}

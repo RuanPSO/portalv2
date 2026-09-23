@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Conexões Remotas</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f5f6fa;
+margin:40px;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+table{
+width:600px;
+border-collapse:collapse;
+background:white;
+}
+
+th,td{
+padding:12px;
+border-bottom:1px solid #eee;
+text-align:left;
+}
+
+button{
+
+background:#2f80ed;
+color:white;
+border:none;
+padding:8px 14px;
+cursor:pointer;
+border-radius:4px;
+
+}
+
+button:hover{
+background:#1c60b8;
+}
+
+#modal{
+
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.8);
+
+}
+
+#modalContent{
+
+position:absolute;
+top:5%;
+left:5%;
+width:90%;
+height:90%;
+background:black;
+
+}
+
+#close{
+
+position:absolute;
+right:20px;
+top:10px;
+color:white;
+font-size:22px;
+cursor:pointer;
+
+}
+
+iframe{
+
+width:100%;
+height:100%;
+border:none;
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>Servidores disponíveis</h2>
+
+<table>
+
+<tr>
+<th>Servidor</th>
+<th>Ação</th>
+</tr>
+
+<tbody id="hosts"></tbody>
+
+</table>
+
+
+<div id="modal">
+
+<div id="modalContent">
+
+<div id="close" onclick="fechar()">✖</div>
+
+<iframe id="rdpFrame"></iframe>
+
+</div>
+
+</div>
+
+
+<script>
+
+async function abrir(id){
+
+    try {
+
+        let r = await fetch("/api/guacamole/connect/" + id)
+        let data = await r.json()
+
+        if(data.error){
+            alert(data.error)
+            return
+        }
+
+        // abre em nova aba
+        window.open(data.url, "_blank")
+
+        // ou redireciona na mesma aba
+        // window.location.href = data.url
+
+    }
+    catch(e){
+        alert("Erro ao conectar: " + e)
+    }
+
+}
+
+function fechar(){
+    let iframe = document.getElementById("rdpFrame")
+    iframe.src = "" // limpa iframe
+    document.getElementById("modal").style.display = "none"
+}
+
+async function carregarHosts(){
+
+    try {
+
+        let r = await fetch("/api/guacamole/hosts")
+        let hosts = await r.json()
+
+        let html = ""
+
+        hosts.forEach(h => {
+
+            html += `
+            <tr>
+                <td>${h.name}</td>
+                <td>
+                    <button onclick="conectar('${h.id}')">
+                        Conectar
+                    </button>
+                </td>
+            </tr>
+            `
+
+        })
+
+        document.getElementById("hosts").innerHTML = html
+
+    }
+    catch(e){
+        alert("Erro carregando servidores: " + e)
+    }
+
+}
+
+async function conectar(ip, nome){
+
+    try{
+
+        let r = await fetch("/remote/connect", {
+            method: "POST",
+            headers: {
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify({
+                ip: ip,
+                name: nome
+            })
+        })
+
+        let data = await r.json()
+
+        if(data.error){
+            alert(data.error)
+            return
+        }
+
+        document.getElementById("rdpFrame").src = data.url
+        document.getElementById("modal").style.display = "block"
+
+    }
+    catch(e){
+        alert("Erro ao conectar: " + e)
+    }
+
+}
+
+carregarHosts()
+
+</script>
+
+</body>
+</html>
